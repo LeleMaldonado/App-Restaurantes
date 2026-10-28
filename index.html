@@ -155,6 +155,16 @@ nav button{display:flex;flex-direction:column;align-items:center;gap:3px}
 .tiers{margin:10px 0 0}.trow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line);text-align:left}.trow:last-child{border:0}.trow.on{font-weight:600}
 .avbtn{position:relative;border:0;background:none;padding:0;border-radius:50%;line-height:0;flex:none;cursor:pointer}
 .avedit{position:absolute;right:-2px;bottom:-2px;width:26px;height:26px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;color:var(--mute)}
+
+.photos .thumb{position:static;width:auto;height:auto;border-radius:8px;background:none;line-height:0;padding:0;cursor:zoom-in}
+.ov.lb{background:rgba(0,0,0,.92);padding:0}
+.lbox{position:relative;display:grid;place-items:center;width:100%;height:100%}
+.lbox img{max-width:100vw;max-height:100vh;object-fit:contain}
+.lbclose{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:12px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:1.8rem;line-height:1;padding:0}
+.lbnav{position:fixed;top:50%;transform:translateY(-50%);width:44px;height:56px;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:2rem;border-radius:10px;padding:0}.lbnav.prev{left:8px}.lbnav.next{right:8px}
+.lbcount{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);color:#fff;background:rgba(0,0,0,.5);padding:2px 12px;border-radius:999px;font-size:.85rem}
+.editbtn{position:absolute;top:8px;right:8px;background:none;border:0;color:var(--mute);padding:8px;line-height:0;border-radius:6px;cursor:pointer}
+.fld input:disabled,.fld textarea:disabled{background:var(--chip);border-color:transparent;color:var(--ink);opacity:1;-webkit-text-fill-color:var(--ink)}
 </style>
 </head>
 <body>
@@ -209,14 +219,14 @@ var SEED=[
 {id:"r21",name:"Taquería Frida",cuisine:"Mexicana",price:"$$",uf:"SP",city:"São Paulo",area:"Pinheiros",km:3.6,la:-23.5655,lo:-46.695,n:64,avg:4.6}];
 var ST="AC:Acre,AL:Alagoas,AP:Amapá,AM:Amazonas,BA:Bahia,CE:Ceará,DF:Distrito Federal,ES:Espírito Santo,GO:Goiás,MA:Maranhão,MT:Mato Grosso,MS:Mato Grosso do Sul,MG:Minas Gerais,PA:Pará,PB:Paraíba,PR:Paraná,PE:Pernambuco,PI:Piauí,RJ:Rio de Janeiro,RN:Rio Grande do Norte,RS:Rio Grande do Sul,RO:Rondônia,RR:Roraima,SC:Santa Catarina,SP:São Paulo,SE:Sergipe,TO:Tocantins";
 var STATES=ST.split(",").map(function(x){return x.split(":")});
-var CT="AC:Rio Branco|Cruzeiro do Sul;AL:Maceió|Arapiraca|Maragogi;AP:Macapá|Santana;AM:Manaus|Parintins;BA:Salvador|Feira de Santana|Vitória da Conquista|Porto Seguro|Ilhéus;CE:Fortaleza|Caucaia|Juazeiro do Norte|Sobral;DF:Brasília;ES:Vitória|Vila Velha|Serra|Cariacica;GO:Goiânia|Anápolis|Aparecida de Goiânia;MA:São Luís|Imperatriz;MT:Cuiabá|Várzea Grande|Rondonópolis;MS:Campo Grande|Dourados|Bonito;MG:Belo Horizonte|Uberlândia|Contagem|Juiz de Fora|Ouro Preto;PA:Belém|Santarém|Ananindeua;PB:João Pessoa|Campina Grande;PR:Curitiba|Londrina|Maringá|Foz do Iguaçu|Ponta Grossa;PE:Recife|Olinda|Caruaru|Petrolina;PI:Teresina|Parnaíba;RJ:Rio de Janeiro|Niterói|Petrópolis|Búzios|Campos dos Goytacazes;RN:Natal|Mossoró;RS:Porto Alegre|Caxias do Sul|Gramado|Pelotas|Canoas;RO:Porto Velho|Ji-Paraná;RR:Boa Vista;SC:Florianópolis|Joinville|Blumenau|Balneário Camboriú|Chapecó;SP:São Paulo|Campinas|Santos|Guarulhos|Ribeirão Preto|São José dos Campos|Sorocaba|Barueri;SE:Aracaju;TO:Palmas|Araguaína";
+var CT="AC:Rio Branco|Cruzeiro do Sul;AL:Maceió|Arapiraca|Maragogi;AP:Macapá|Santana;AM:Manaus|Parintins;BA:Salvador|Feira de Santana|Vitória da Conquista|Porto Seguro|Ilhéus;CE:Fortaleza|Caucaia|Juazeiro do Norte|Sobral;DF:Brasília;ES:Vitória|Vila Velha|Serra|Cariacica;GO:Goiânia|Anápolis|Aparecida de Goiânia;MA:São Luís|Imperatriz;MT:Cuiabá|Várzea Grande|Rondonópolis;MS:Campo Grande|Dourados|Bonito;MG:Belo Horizonte|Uberlândia|Contagem|Juiz de Fora|Ouro Preto;PA:Belém|Santarém|Ananindeua;PB:João Pessoa|Campina Grande;PR:Curitiba|Londrina|Maringá|Foz do Iguaçu|Ponta Grossa;PE:Recife|Olinda|Caruaru|Petrolina;PI:Teresina|Parnaíba;RJ:Rio de Janeiro|Niterói|Petrópolis|Armação dos Búzios|Campos dos Goytacazes;RN:Natal|Mossoró;RS:Porto Alegre|Caxias do Sul|Gramado|Pelotas|Canoas;RO:Porto Velho|Ji-Paraná;RR:Boa Vista;SC:Florianópolis|Joinville|Blumenau|Balneário Camboriú|Chapecó;SP:São Paulo|Campinas|Santos|Guarulhos|Ribeirão Preto|São José dos Campos|Sorocaba|Barueri;SE:Aracaju;TO:Palmas|Araguaína";
 var CITIES={};CT.split(";").forEach(function(x){var p=x.split(":");CITIES[p[0]]=p[1].split("|")});
 var CUIS=["Árabe","Bar","Brasileira","Churrasco","Doces","Frutos do mar","Italiana","Japonesa","Lanches","Mexicana","Vegetariana"].sort(function(a,b){return a.localeCompare(b,"pt")}).concat(["Outros"]);
 var CATS=[["food","Comida"],["service","Atendimento"],["ambience","Ambiente"],["price","Preço"]];
-var KEY="comanda-proto-v2",M=20,MAXP=5,today=new Date().toISOString().slice(0,10),NEAR="Perto de você";
+var KEY="comanda-proto-v2",M=20,MAXP=3,today=new Date().toISOString().slice(0,10),NEAR="Perto de você";
 function newF(){return{rid:"",name:"",cuisine:"Outros",uf:(S&&S.uf)||"SP",city:(S&&S.city)||"São Paulo",r:{food:0,service:0,ambience:0,price:0},text:"",date:today,photos:[]}}
 var S={mine:[],extra:[],wish:[],favr:[],prof:{name:"Visitante",user:"visitante",bio:"",uf:"SP",city:"São Paulo",vis:"private",photo:"",favs:[],prices:[],theme:"auto",badge:""},
-tab:"rank",compose:false,pview:"",wopen:null,navr:null,editId:null,bcat:"Todas",badge:null,avmenu:false,wnew:null,mode:"city",uf:"SP",city:"São Paulo",pos:null,km:15,cuisine:"Todas",q:"",mq:"",rsort:"nota",rdir:"desc",msort:"data",mdir:"desc",wcuisine:"Todas",open:null,confirm:null,share:null,f:newF()};
+tab:"rank",compose:false,pview:"",wopen:null,navr:null,editId:null,bcat:"Todas",badge:null,avmenu:false,wnew:null,lb:null,pedit:false,pbak:null,mode:"city",uf:"SP",city:"São Paulo",pos:null,km:15,cuisine:"Todas",q:"",mq:"",rsort:"nota",rdir:"desc",msort:"data",mdir:"desc",wcuisine:"Todas",open:null,confirm:null,share:null,f:newF()};
 var loaded=false;
 try{var d=JSON.parse(localStorage.getItem(KEY)||"null");if(d){S.mine=d.mine||[];S.extra=d.extra||[];S.wish=d.wish||[];S.favr=d.favr||[];Object.assign(S.prof,d.prof||{});loaded=true}}catch(e){}
 if(!loaded){S.mine=[
@@ -224,6 +234,24 @@ if(!loaded){S.mine=[
 {id:2,rid:"r1",r:{food:5,service:3,ambience:4,price:4},score:4,text:"Massa no ponto e forno a lenha de verdade. O serviço demora um pouco nos sábados.",date:"2026-10-09",photos:[]}];S.wish=["r7","r4"];S.favr=["r3"]}
 STATES.forEach(function(x){if((CITIES[x[0]]||[]).indexOf(S.prof.city)>=0&&S.prof.uf!==x[0]&&!(CITIES[S.prof.uf]||[]).includes(S.prof.city))S.prof.uf=x[0]});
 S.uf=S.prof.uf;S.city=S.prof.city;
+var UIK="comanda-ui-v1",UIF=["tab","pview","mode","uf","city","km","cuisine","q","rsort","rdir","msort","mdir","mq","wcuisine","bcat","pos"];
+function saveUI(){try{var o={};UIF.forEach(function(k){o[k]=S[k]});localStorage.setItem(UIK,JSON.stringify(o))}catch(e){}}
+function loadUI(){try{var o=JSON.parse(localStorage.getItem(UIK)||"null");if(!o)return;UIF.forEach(function(k){if(o[k]!==undefined)S[k]=o[k]});
+  if(["rank","mine","wish","prof"].indexOf(S.tab)<0)S.tab="rank";
+  if(["","favs","badges"].indexOf(S.pview)<0)S.pview="";
+  if(S.pos&&typeof S.pos.la!=="number")S.pos=null;
+  if(S.mode!=="gps"&&S.mode!=="city")S.mode="city";
+  if(S.mode==="gps"&&!S.pos)S.mode="city";
+  if(!(S.km>=1&&S.km<=50))S.km=15;
+  if(!STATES.some(function(x){return x[0]===S.uf})||typeof S.city!=="string"){S.uf=S.prof.uf;S.city=S.prof.city}
+  if(["nota","dist","aval","nome"].indexOf(S.rsort)<0)S.rsort="nota";
+  if(["data","nota","alfa"].indexOf(S.msort)<0)S.msort="data";
+  if(S.rdir!=="asc")S.rdir="desc";if(S.mdir!=="asc")S.mdir="desc";
+  if(typeof S.q!=="string")S.q="";if(typeof S.mq!=="string")S.mq="";
+  if(S.cuisine!=="Todas"&&CUIS.indexOf(S.cuisine)<0)S.cuisine="Todas";
+  if(S.wcuisine!=="Todas"&&CUIS.indexOf(S.wcuisine)<0)S.wcuisine="Todas";
+  if(["Todas","Volume","Exploração","Qualidade","Especialistas","Coleções","Secretas"].indexOf(S.bcat)<0)S.bcat="Todas"}catch(e){}}
+loadUI();
 function save(){try{localStorage.setItem(KEY,JSON.stringify({mine:S.mine,extra:S.extra,wish:S.wish,favr:S.favr,prof:S.prof}));return true}catch(e){return false}}
 function norm(s){return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
 function svg(p,z,f){return'<svg width="'+z+'" height="'+z+'" viewBox="0 0 24 24" fill="'+(f?"currentColor":"none")+'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>'}
@@ -232,8 +260,15 @@ function all(){return SEED.concat(S.extra)}
 function avgR(r){var t=0;CATS.forEach(function(k){t+=r[k[0]]||0});return t/CATS.length}
 function dist(r){if(S.mode!=="gps")return r.km;return S.pos&&r.la!=null?hav(S.pos.la,S.pos.lo,r.la,r.lo):1e9}
 function cityLabel(){return S.mode==="gps"?NEAR:S.city}
-function cityOpts(uf){var c=(CITIES[uf]||[]).slice();all().forEach(function(r){if(r.uf===uf&&c.indexOf(r.city)<0)c.push(r.city)});return c.sort(function(a,b){return a.localeCompare(b,"pt")})}
-function locSel(iu,ic,uf,city){return'<label>Estado<select id="'+iu+'">'+STATES.map(function(x){return'<option value="'+x[0]+'"'+(x[0]===uf?" selected":"")+'>'+x[1]+'</option>'}).join("")+'</select></label><label>Cidade<select id="'+ic+'">'+cityOpts(uf).map(function(c){return'<option'+(c===city?" selected":"")+'>'+c+'</option>'}).join("")+'</select></label>'}
+var MUN={},MUNT={};
+function loadMun(uf){if(MUN[uf]||MUNT[uf])return;MUNT[uf]=1;
+  try{var c=JSON.parse(localStorage.getItem("comanda-mun-"+uf)||"null");if(c&&c.length){MUN[uf]=c;return}}catch(e){}
+  if(typeof fetch!=="function")return;
+  fetch("https://servicodados.ibge.gov.br/api/v1/localidades/estados/"+uf+"/municipios").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(a){var l=a.map(function(m){return m.nome}).filter(Boolean);if(!l.length)return;MUN[uf]=l;try{localStorage.setItem("comanda-mun-"+uf,JSON.stringify(l))}catch(e){}render()}).catch(function(){})}
+function defCity(uf){return(CITIES[uf]||[])[0]||""}
+function cityOpts(uf){loadMun(uf);var c=(MUN[uf]||CITIES[uf]||[]).slice();all().forEach(function(r){if(r.uf===uf&&c.indexOf(r.city)<0)c.push(r.city)});return c.sort(function(a,b){return a.localeCompare(b,"pt")})}
+function cOpts(uf,city){var l=cityOpts(uf);if(city&&l.indexOf(city)<0)l.unshift(city);return l}
+function locSel(iu,ic,uf,city){return'<label>Estado<select id="'+iu+'">'+STATES.map(function(x){return'<option value="'+x[0]+'"'+(x[0]===uf?" selected":"")+'>'+x[1]+'</option>'}).join("")+'</select></label><label>Cidade<select id="'+ic+'">'+cOpts(uf,city).map(function(c){return'<option'+(c===city?" selected":"")+'>'+c+'</option>'}).join("")+'</select></label>'}
 function inScope(r){return(S.mode==="gps"||(r.uf===S.uf&&r.city===S.city))&&dist(r)<=S.km}
 function sortBar(id,list,cur,act,dir){return'<div class="sort"><label for="'+id+'">Ordenar por</label><select id="'+id+'">'+opts(list,cur)+'</select><button class="btn sm ghost dirbtn" data-a="'+act+'" aria-label="'+(dir==="asc"?"Ordem crescente":"Ordem decrescente")+'. Toque para inverter" title="'+(dir==="asc"?"Crescente":"Decrescente")+'">'+svg(dir==="asc"?'<path d="M12 19V5M5 12l7-7 7 7"/>':'<path d="M12 5v14M19 12l-7 7-7-7"/>',18)+'</button></div>'}
 var DN=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"],A2=[[690,900],[1080,1380]],B2=[[690,1380]],X2=[],BR=[[1020,1500]],DC=[[600,1200]],LN=[[480,1200]];
@@ -275,7 +310,7 @@ function pick(c,val){
   return h+'</span><span class="val">'+n1(val)+'</span>'}
 function ticket(v){
   var r=byId(v.rid),f=S.favr.indexOf(v.rid)>=0;
-  return'<article class="ticket"><div class="stub"><b>'+n1(v.score)+'</b><span>'+fmt(v.date)+'</span></div><div class="tbody"><div class="tools"><button data-a="edit" data-v="'+v.id+'" aria-label="Editar avaliação">'+svg(IC.pencil,18)+'</button><button class="'+(f?"on":"")+'" data-a="rfav" data-v="'+v.rid+'" aria-pressed="'+f+'" aria-label="Favoritar '+esc(r.name)+'">'+svg(IC.heart,18,f)+'</button><button data-a="share" data-v="'+v.id+'" aria-label="Compartilhar avaliação">'+svg(IC.share,18)+'</button><button data-a="ask" data-v="'+v.id+'" aria-label="Excluir avaliação">'+svg(IC.trash,18)+'</button></div><h2>'+esc(r.name)+'</h2><span class="stars" aria-label="Nota '+n1(v.score)+' de 5">'+sh(v.score)+'</span><div class="cats">'+CATS.map(function(c){return c[1]+' '+n1(v.r[c[0]])}).join(" · ")+'</div><p>'+esc(v.text||"Sem comentário.")+'</p>'+(v.photos&&v.photos.length?'<div class="photos">'+v.photos.map(function(p){return'<img src="'+p+'" alt="Foto da avaliação">'}).join("")+'</div>':"")+'</div></article>'}
+  return'<article class="ticket"><div class="stub"><b>'+n1(v.score)+'</b><span>'+fmt(v.date)+'</span></div><div class="tbody"><div class="tools"><button data-a="edit" data-v="'+v.id+'" aria-label="Editar avaliação">'+svg(IC.pencil,18)+'</button><button class="'+(f?"on":"")+'" data-a="rfav" data-v="'+v.rid+'" aria-pressed="'+f+'" aria-label="Favoritar '+esc(r.name)+'">'+svg(IC.heart,18,f)+'</button><button data-a="share" data-v="'+v.id+'" aria-label="Compartilhar avaliação">'+svg(IC.share,18)+'</button><button data-a="ask" data-v="'+v.id+'" aria-label="Excluir avaliação">'+svg(IC.trash,18)+'</button></div><h2>'+esc(r.name)+'</h2><span class="stars" aria-label="Nota '+n1(v.score)+' de 5">'+sh(v.score)+'</span><div class="cats">'+CATS.map(function(c){return c[1]+' '+n1(v.r[c[0]])}).join(" · ")+'</div><p>'+esc(v.text||"Sem comentário.")+'</p>'+(v.photos&&v.photos.length?'<div class="photos">'+v.photos.map(function(p,i){return'<button class="thumb" data-a="photo" data-v="'+v.id+':'+i+'" aria-label="Ampliar foto '+(i+1)+'"><img src="'+p+'" alt="Foto da avaliação"></button>'}).join("")+'</div>':"")+'</div></article>'}
 function ticketsHtml(){
   var k=S.msort,sg=S.mdir==="asc"?1:-1,q=norm(S.mq.trim());
   var l=S.mine.filter(function(v){var r=byId(v.rid);return r&&(!q||norm(r.name+" "+r.cuisine+" "+(v.text||"")).indexOf(q)>=0)});
@@ -290,7 +325,7 @@ function mineView(){
 function form(){
   var f=S.f,h='<div class="bar"><h2>'+(S.editId?"Editar avaliação":"Nova avaliação")+'</h2><button class="btn sm ghost" data-a="back">Voltar</button></div>';
   if(S.editId){var er=byId(f.rid);h+='<div class="fld">Restaurante<div style="font-weight:400;margin-top:6px">'+esc(er.name)+' <span class="meta">· '+esc(er.city)+'</span></div></div>'}else h+='<label class="fld">Restaurante<select id="rid"><option value="">Escolha um restaurante</option>'+all().map(function(r){return'<option value="'+r.id+'"'+(f.rid===r.id?" selected":"")+'>'+esc(r.name)+' – '+esc(r.city)+'</option>'}).join("")+'<option value="__new"'+(f.rid==="__new"?" selected":"")+'>Outro (adicionar)</option></select></label>';
-  if(f.rid==="__new")h+='<label class="fld">Nome do restaurante<input id="name" value="'+esc(f.name)+'"></label><label class="fld">Tipo de cozinha<select id="fcuisine">'+CUIS.map(function(c){return'<option'+(c===f.cuisine?" selected":"")+'>'+c+'</option>'}).join("")+'</select></label><label class="fld">Estado<select id="fuf">'+STATES.map(function(x){return'<option value="'+x[0]+'"'+(x[0]===f.uf?" selected":"")+'>'+x[1]+'</option>'}).join("")+'</select></label><label class="fld">Cidade<select id="fcity">'+cityOpts(f.uf).map(function(c){return'<option'+(c===f.city?" selected":"")+'>'+c+'</option>'}).join("")+'</select></label>';
+  if(f.rid==="__new")h+='<label class="fld">Nome do restaurante<input id="name" value="'+esc(f.name)+'"></label><label class="fld">Tipo de cozinha<select id="fcuisine">'+CUIS.map(function(c){return'<option'+(c===f.cuisine?" selected":"")+'>'+c+'</option>'}).join("")+'</select></label><label class="fld">Estado<select id="fuf">'+STATES.map(function(x){return'<option value="'+x[0]+'"'+(x[0]===f.uf?" selected":"")+'>'+x[1]+'</option>'}).join("")+'</select></label><label class="fld">Cidade<select id="fcity">'+cOpts(f.uf,f.city).map(function(c){return'<option'+(c===f.city?" selected":"")+'>'+c+'</option>'}).join("")+'</select></label>';
   h+='<div class="fld">Notas por categoria (toque na metade da estrela para meia nota; toque de novo para zerar)'+CATS.map(function(k){return'<div class="catrow"><span style="font-weight:400">'+k[1]+'</span><div role="group" aria-label="'+k[1]+'">'+pick(k[0],f.r[k[0]])+'</div></div>'}).join("")+'</div>';
   h+='<div class="final">Nota final: '+n1(avgR(f.r))+' de 5</div>';
   h+='<label class="fld">Como foi?<textarea id="text" rows="4" placeholder="Prato que pediu, atendimento, ambiente…">'+esc(f.text)+'</textarea></label><label class="fld">Data da visita<input type="date" id="date" value="'+f.date+'"></label>';
@@ -298,7 +333,7 @@ function form(){
   h+='<p class="meta">Esta avaliação segue a privacidade do seu perfil (hoje: '+(S.prof.vis==="public"?"público":"privado")+').</p><button class="btn" data-a="save">'+(S.editId?"Salvar alterações":"Salvar avaliação")+'</button>';
   return h}
 
-function newPlacePanel(){var w=S.wnew;return'<div class="sec"><h2>Novo local</h2><p class="meta" style="margin:0 0 12px">Esse local não está na lista. Informe o tipo de comida e onde ele fica.</p><label class="fld">Nome<input id="wnn" value="'+esc(w.name)+'"></label><label class="fld">Tipo de cozinha<select id="wnc">'+CUIS.map(function(c){return'<option'+(c===w.cuisine?" selected":"")+'>'+c+'</option>'}).join("")+'</select></label><label class="fld">Estado<select id="wnuf">'+STATES.map(function(x){return'<option value="'+x[0]+'"'+(x[0]===w.uf?" selected":"")+'>'+x[1]+'</option>'}).join("")+'</select></label><label class="fld">Cidade<select id="wncity">'+cityOpts(w.uf).map(function(c){return'<option'+(c===w.city?" selected":"")+'>'+c+'</option>'}).join("")+'</select></label><div class="acts"><button class="btn" data-a="wnsave">Adicionar a Quero Conhecer</button><button class="btn ghost" data-a="wncancel">Cancelar</button></div></div>'}
+function newPlacePanel(){var w=S.wnew;return'<div class="sec"><h2>Novo local</h2><p class="meta" style="margin:0 0 12px">Esse local não está na lista. Informe o tipo de comida e onde ele fica.</p><label class="fld">Nome<input id="wnn" value="'+esc(w.name)+'"></label><label class="fld">Tipo de cozinha<select id="wnc">'+CUIS.map(function(c){return'<option'+(c===w.cuisine?" selected":"")+'>'+c+'</option>'}).join("")+'</select></label><label class="fld">Estado<select id="wnuf">'+STATES.map(function(x){return'<option value="'+x[0]+'"'+(x[0]===w.uf?" selected":"")+'>'+x[1]+'</option>'}).join("")+'</select></label><label class="fld">Cidade<select id="wncity">'+cOpts(w.uf,w.city).map(function(c){return'<option'+(c===w.city?" selected":"")+'>'+c+'</option>'}).join("")+'</select></label><div class="acts"><button class="btn" data-a="wnsave">Adicionar a Quero Conhecer</button><button class="btn ghost" data-a="wncancel">Cancelar</button></div></div>'}
 function wishView(){
   var items=S.wish.map(byId).filter(Boolean).sort(byName);
   var h='<h2>Quero Conhecer</h2><p class="meta" style="margin:0 0 14px">Locais que você quer visitar.</p>'+(S.wnew?newPlacePanel():'<div class="add"><div class="combo"><input id="wname" autocomplete="off" role="combobox" aria-controls="wsug" placeholder="Digite o nome de um local" aria-label="Nome do local"><div id="wsug" class="sug" role="listbox"></div></div><button class="btn" data-a="wadd">Adicionar</button></div>')+'';
@@ -390,7 +425,7 @@ function badgeModal(){
 function profView(){
   if(S.pview==="favs")return favView();
   if(S.pview==="badges")return badgesView();
-  var p=S.prof,cnt={},best="–",bn=0,t=0,rids=[],cts=[],m0=metrics(S.mine),fb0=featOf(m0,p.badge);
+  var p=S.prof,cnt={},best="–",bn=0,t=0,rids=[],cts=[],m0=metrics(S.mine),fb0=featOf(m0,p.badge),dis=S.pedit?"":" disabled";
   S.mine.forEach(function(v){t+=v.score;var r=byId(v.rid);if(r){cnt[r.cuisine]=(cnt[r.cuisine]||0)+1;if(cnt[r.cuisine]>bn){bn=cnt[r.cuisine];best=r.cuisine}if(rids.indexOf(r.id)<0)rids.push(r.id);if(r.city!==NEAR&&cts.indexOf(r.city)<0)cts.push(r.city)}});
   var ini=(p.name||"?").trim().charAt(0).toUpperCase();
   function bd(n,d,v,g){return'<div class="badgeitem"><b>'+n+'</b><br><span class="meta">'+d+'</span><div class="prog"><i style="width:'+Math.min(100,v/g*100)+'%"></i></div><span class="meta">'+v+' de '+g+'</span></div>'}
@@ -398,13 +433,15 @@ function profView(){
     +'<div class="sec"><h2>Estatísticas</h2><div class="statg"><div><b>'+S.mine.length+'</b><span class="meta">avaliações</span></div><div><b>'+(S.mine.length?n1(t/S.mine.length):"–")+'</b><span class="meta">nota média que você dá</span></div><div><b>'+esc(best)+'</b><span class="meta">cozinha mais avaliada</span></div><div><b>'+S.wish.length+'</b><span class="meta">em Quero Conhecer</span></div></div></div>'
   +'<button class="sec rowbtn" data-a="favs"><span>Restaurantes Favoritos ('+S.favr.length+')</span><span aria-hidden="true">›</span></button>'
   +badgeSec(m0)
-  +'<div class="sec"><h2>Sobre você</h2><label class="fld">Nome<input id="pname" value="'+esc(p.name)+'"></label><label class="fld">Usuário<input id="puser" value="'+esc(p.user)+'"></label><label class="fld">Bio<textarea id="pbio" rows="2" placeholder="Conte um pouco sobre seu gosto">'+esc(p.bio)+'</textarea></label>'+'</div>'
+  +'<div class="sec" style="position:relative"><h2>Sobre você</h2>'+(S.pedit?"":'<button class="editbtn" data-a="pedit" aria-label="Editar informações do perfil">'+svg(IC.pencil,18)+'</button>')+'<label class="fld">Nome<input id="pname" value="'+esc(p.name)+'"'+dis+'></label><label class="fld">Usuário<input id="puser" value="'+esc(p.user)+'"'+dis+'></label><label class="fld">Bio<textarea id="pbio" rows="2" placeholder="Conte um pouco sobre seu gosto"'+dis+'>'+esc(p.bio)+'</textarea></label>'+(S.pedit?'<div class="acts"><button class="btn" data-a="psave">Salvar</button><button class="btn ghost" data-a="pcancel">Cancelar</button></div>':"")+'</div>'
   +'<div class="sec"><h2>Privacidade do perfil</h2>'+seg("pvis",[["private","Privado"],["public","Público"]],p.vis)+'<p class="meta">'+(p.vis==="public"?"Suas avaliações são visíveis para todos e entram na nota dos restaurantes.":"Suas avaliações só são vistas por quem receber o compartilhamento e não entram na nota dos restaurantes.")+'</p></div>'
   +'<div class="sec"><h2>Preferências</h2><p class="meta" style="margin:0 0 8px">Cozinhas favoritas</p><div class="chips wrap2">'+CUIS.map(function(c){return'<button class="chip" data-a="cfav" data-v="'+esc(c)+'" aria-pressed="'+(p.favs.indexOf(c)>=0)+'">'+esc(c)+'</button>'}).join("")+'</div><p class="meta" style="margin:8px 0 0">Restaurantes que combinam recebem uma etiqueta em Explorar.</p></div>'
   +'<div class="sec"><h2>Configurações</h2><p class="meta" style="margin:0 0 8px">Tema</p>'+seg("theme",[["auto","Automático"],["light","Claro"],["dark","Escuro"]],p.theme)+'</div>'}
 
 function modal(){
   var m=document.getElementById("modal");
+  if(S.lb){var lv=S.mine.filter(function(x){return x.id===S.lb.id})[0],lp=lv&&lv.photos;if(!lp||!lp.length){S.lb=null;m.innerHTML="";return}var ln=lp.length,li=((S.lb.i%ln)+ln)%ln;S.lb.i=li;
+    m.innerHTML='<div class="ov lb" data-a="lbclose"><div class="lbox"><img src="'+lp[li]+'" alt="Foto ampliada '+(li+1)+' de '+ln+'">'+(ln>1?'<button class="lbnav prev" data-a="lbprev" aria-label="Foto anterior">‹</button><button class="lbnav next" data-a="lbnext" aria-label="Próxima foto">›</button><span class="lbcount">'+(li+1)+' de '+ln+'</span>':"")+'<button class="lbclose" data-a="lbclose" aria-label="Fechar foto">×</button></div></div>';return}
   if(S.avmenu){m.innerHTML='<div class="ov"><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dt"><h2 id="dt">Foto de perfil</h2><div class="navbtns"><label class="btn" style="text-align:center;cursor:pointer">'+(S.prof.photo?"Alterar foto":"Escolher foto")+'<input type="file" id="avatar" accept="image/*" style="display:none"></label>'+(S.prof.photo?'<button class="btn ghost" data-a="avremove">Remover foto</button>':"")+'<button class="btn ghost" data-a="closeav" id="cbtn">Cancelar</button></div></div></div>';document.getElementById("cbtn").focus();return}
   if(S.badge){m.innerHTML=badgeModal();document.getElementById("cbtn").focus();return}
   if(S.share){m.innerHTML='<div class="ov"><div class="dlg wide" role="dialog" aria-modal="true" aria-label="Pré-visualização do cartão"><img class="card" src="'+S.share.url+'" alt="Cartão da avaliação"><div class="acts"><button class="btn ghost" data-a="closeshare" id="cbtn">Fechar</button><button class="btn" data-a="doshare">Compartilhar</button></div></div></div>';document.getElementById("cbtn").focus();return}
@@ -416,7 +453,7 @@ function modal(){
 function render(){
   document.getElementById("app").innerHTML=S.tab==="rank"?rank():S.tab==="mine"?mineView():S.tab==="wish"?wishView():profView();
   document.getElementById("nav").innerHTML=[["rank","Explorar",IC.search],["mine","Minhas Avaliações",IC.star],["wish","Quero Conhecer",IC.mark],["prof","Perfil",IC.user]].map(function(t){return'<button data-a="tab" data-v="'+t[0]+'"'+(S.tab===t[0]?' aria-current="page"':"")+'>'+svg(t[2],22)+'<span>'+t[1]+'</span></button>'}).join("");
-  modal()}
+  modal();saveUI()}
 
 function doSave(){
   var f=S.f,rid=f.rid;
@@ -429,11 +466,13 @@ function doSave(){
   S.wish=S.wish.filter(function(w){return w!==rid});
   var ok=save();S.f=newF();S.compose=false;S.tab="mine";render();toast(ok?"Avaliação salva":"Salva, mas sem espaço para guardar no navegador")}
 
-function locate(){
-  if(!navigator.geolocation){toast("Seu navegador não oferece localização.");return}
-  toast("Obtendo sua localização…");
-  navigator.geolocation.getCurrentPosition(function(p){S.pos={la:p.coords.latitude,lo:p.coords.longitude};S.mode="gps";S.cuisine="Todas";S.open=null;render();toast("Usando sua localização atual")},
-  function(){toast("Não foi possível obter sua localização. Verifique a permissão do navegador.")},{timeout:8000})}
+function locate(silent){
+  if(!navigator.geolocation){if(!silent)toast("Seu navegador não oferece localização.");return}
+  if(!silent)toast("Obtendo sua localização…");
+  navigator.geolocation.getCurrentPosition(function(p){S.pos={la:p.coords.latitude,lo:p.coords.longitude};
+    if(silent){var l=document.getElementById("list");if(l&&S.mode==="gps"&&S.tab==="rank")l.innerHTML=listHtml();saveUI();return}
+    S.mode="gps";S.cuisine="Todas";S.open=null;render();toast("Usando sua localização atual")},
+  function(){if(!silent)toast("Não foi possível obter sua localização. Verifique a permissão do navegador.")},{timeout:8000})}
 
 function addPhotos(files){Array.prototype.slice.call(files,0,MAXP-S.f.photos.length).forEach(function(file){readImg(file,function(im){var k=Math.min(1,720/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);if(S.f.photos.length<MAXP)S.f.photos.push(c.toDataURL("image/jpeg",.7));if(S.compose)render()})})}
 
@@ -449,7 +488,7 @@ async function share(id){
   c.height=H;
   function rr(a,b,w,h,q){x.beginPath();x.moveTo(a+q,b);x.arcTo(a+w,b,a+w,b+h,q);x.arcTo(a+w,b+h,a,b+h,q);x.arcTo(a,b+h,a,b,q);x.arcTo(a,b,a+w,b,q);x.closePath()}
   var g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"#1B2D55");g.addColorStop(1,"#0B1426");x.fillStyle=g;x.fillRect(0,0,W,H);
-  if(ph){var sc=Math.max(W/ph.width,hh/ph.height),pw=ph.width*sc,pH=ph.height*sc;x.drawImage(ph,(W-pw)/2,(hh-pH)/2,pw,pH);var og=x.createLinearGradient(0,hh-340,0,hh);og.addColorStop(0,"rgba(11,20,38,0)");og.addColorStop(1,"rgba(11,20,38,.97)");x.fillStyle=og;x.fillRect(0,hh-340,W,340)}
+  if(ph){x.save();x.beginPath();x.rect(0,0,W,hh);x.clip();var sc=Math.max(W/ph.width,hh/ph.height),pw=ph.width*sc,pH=ph.height*sc;x.drawImage(ph,(W-pw)/2,(hh-pH)/2,pw,pH);x.fillStyle="rgba(0,0,0,.2)";x.fillRect(0,0,W,hh);var tt=hh/H,cr=Math.round(27-16*tt),cg=Math.round(45-25*tt),cb=Math.round(85-47*tt),og=x.createLinearGradient(0,hh-340,0,hh);og.addColorStop(0,"rgba("+cr+","+cg+","+cb+",0)");og.addColorStop(1,"rgb("+cr+","+cg+","+cb+")");x.fillStyle=og;x.fillRect(0,hh-340,W,341);x.restore()}
   else{x.fillStyle="#C8102E";x.beginPath();x.arc(W-70,80,230,0,7);x.fill()}
   x.textBaseline="alphabetic";x.fillStyle="#fff";x.font="800 46px "+HF;x.shadowColor="rgba(0,0,0,.5)";x.shadowBlur=ph?12:0;x.fillText("Comanda",60,100);x.shadowBlur=0;
   x.font="800 76px "+HF;nameL.forEach(function(l,i){x.fillText(l,60,hh-110-(nameL.length-1-i)*86)});
@@ -474,7 +513,7 @@ async function doShare(){
 
 document.addEventListener("click",function(e){
   var b=e.target.closest("[data-a]");if(!b)return;var a=b.dataset.a,v=b.dataset.v;
-  if(a==="tab"){S.tab=v;S.pview="";S.wnew=null;if(v!=="mine"){S.compose=false;S.editId=null}render();window.scrollTo(0,0)}
+  if(a==="tab"){if(S.pedit){if(S.pbak)Object.assign(S.prof,S.pbak);S.pedit=false;S.pbak=null}S.tab=v;S.pview="";S.wnew=null;if(v!=="mine"){S.compose=false;S.editId=null}render();window.scrollTo(0,0)}
   else if(a==="mode"){if(v==="gps")locate();else{S.mode="city";render()}}
   else if(a==="cuisine"){S.cuisine=v;S.open=null;render()}
   else if(a==="wcuisine"){S.wcuisine=v;render()}
@@ -504,6 +543,13 @@ document.addEventListener("click",function(e){
   else if(a==="badge"){S.badge=v;modal()}
   else if(a==="closebadge"){S.badge=null;modal()}
   else if(a==="equip"){S.prof.badge=S.prof.badge===v?"":v;save();render()}
+  else if(a==="photo"){var pr=v.split(":");S.lb={id:+pr[0],i:+pr[1]};modal()}
+  else if(a==="lbclose"){S.lb=null;modal()}
+  else if(a==="lbprev"){S.lb.i--;modal()}
+  else if(a==="lbnext"){S.lb.i++;modal()}
+  else if(a==="pedit"){S.pbak={name:S.prof.name,user:S.prof.user,bio:S.prof.bio};S.pedit=true;render()}
+  else if(a==="psave"){S.pedit=false;S.pbak=null;save();render();toast("Perfil atualizado")}
+  else if(a==="pcancel"){if(S.pbak)Object.assign(S.prof,S.pbak);S.pedit=false;S.pbak=null;render()}
   else if(a==="avmenu"){S.avmenu=true;modal()}
   else if(a==="closeav"){S.avmenu=false;modal()}
   else if(a==="avremove"){S.prof.photo="";S.avmenu=false;save();render();toast("Foto removida")}
@@ -524,8 +570,8 @@ document.addEventListener("click",function(e){
   else if(a==="pvis"){S.prof.vis=v;save();render()}
   else if(a==="cfav"){toggle(S.prof.favs,v);save();render()}
   else if(a==="theme"){S.prof.theme=v;save();theme();render()}});
-document.addEventListener("keydown",function(e){if(e.key==="Escape"&&(S.confirm!==null||S.share||S.navr||S.badge||S.avmenu)){S.confirm=null;S.share=null;S.navr=null;S.badge=null;S.avmenu=false;modal()}});
-document.addEventListener("input",function(e){var i=e.target.id,x=e.target.value;
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&(S.confirm!==null||S.share||S.navr||S.badge||S.avmenu||S.lb)){S.confirm=null;S.share=null;S.navr=null;S.badge=null;S.avmenu=false;S.lb=null;modal()}});
+document.addEventListener("input",function(e){var i=e.target.id,x=e.target.value;setTimeout(saveUI,0);
   if(i==="km"){S.km=+x;document.getElementById("kmv").textContent=S.km+" km";document.getElementById("list").innerHTML=listHtml()}
   else if(i==="wname"){document.getElementById("wsug").innerHTML=sugHtml(x)}
   else if(i==="wnn")S.wnew.name=x;
@@ -538,24 +584,25 @@ document.addEventListener("input",function(e){var i=e.target.id,x=e.target.value
 document.addEventListener("change",function(e){var i=e.target.id,x=e.target.value;
   if(i==="rid"){S.f.rid=x;render()}
   else if(i==="fcuisine")S.f.cuisine=x;
-  else if(i==="fuf"){S.f.uf=x;S.f.city=cityOpts(x)[0];render()}
+  else if(i==="fuf"){S.f.uf=x;S.f.city=defCity(x);render()}
   else if(i==="fcity")S.f.city=x;
   else if(i==="wnc")S.wnew.cuisine=x;
-  else if(i==="wnuf"){S.wnew.uf=x;S.wnew.city=cityOpts(x)[0];render()}
+  else if(i==="wnuf"){S.wnew.uf=x;S.wnew.city=defCity(x);render()}
   else if(i==="wncity")S.wnew.city=x;
-  else if(i==="uf"){S.uf=x;S.city=cityOpts(x)[0];S.open=null;render()}
+  else if(i==="uf"){S.uf=x;S.city=defCity(x);S.open=null;render()}
   else if(i==="city"){S.city=x;S.open=null;render()}
   else if(i==="rsort"){S.rsort=x;S.rdir=(x==="dist"||x==="nome")?"asc":"desc";render()}
   else if(i==="msort"){S.msort=x;S.mdir=x==="alfa"?"asc":"desc";render()}
   else if(i==="photos")addPhotos(e.target.files);
   else if(i==="avatar"&&e.target.files[0]){S.avmenu=false;addAvatar(e.target.files[0])}
-  else if(i==="puf"){S.prof.uf=x;S.prof.city=cityOpts(x)[0];save();render()}
+  else if(i==="puf"){S.prof.uf=x;S.prof.city=defCity(x);save();render()}
   else if(i==="pcity"){S.prof.city=x;save()}
-  else if(i==="pname"||i==="puser"||i==="pbio"){save();if(i!=="pbio")render()}});
+  else if(i==="__none"){}});
 document.addEventListener("focusin",function(e){if(e.target.id==="wname")document.getElementById("wsug").innerHTML=sugHtml(e.target.value)});
 document.addEventListener("focusout",function(e){if(e.target.id==="wname")setTimeout(function(){var q=document.getElementById("wsug");if(q&&document.activeElement!==document.getElementById("wname"))q.innerHTML=""},250)});
 document.addEventListener("mousedown",function(e){if(e.target.closest(".opt"))e.preventDefault()});
 theme();render();
+loadMun(S.uf);if(S.mode==="gps")locate(true);
 </script>
 <script>if("serviceWorker"in navigator&&location.protocol.indexOf("http")===0){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
 </body>
