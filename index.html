@@ -300,52 +300,68 @@ function osmPlace(e){var t=e.tags||{};if(!t.name)return null;var la=e.lat!=null?
   return{id:"osm-"+e.type.charAt(0)+e.id,osm:1,name:t.name,cuisine:osmCuisine(t),price:"",uf:S.mode==="city"?S.uf:"",city:city,area:sub||street||city,addr:street,km:0,la:la,lo:lo,n:0,avg:0,hours:t.opening_hours||"",phone:t.phone||t["contact:phone"]||"",site:t.website||t["contact:website"]||""}}
 function ovpSel(f){return'nwr["amenity"~"^(restaurant|fast_food|cafe|bar|pub|ice_cream|food_court)$"]["name"]'+f+';nwr["shop"~"^(bakery|confectionery|pastry|chocolate)$"]["name"]'+f+';'}
 function ovpQuery(c,r){return'[out:json][timeout:25];('+ovpSel("(around:"+Math.round(r*1000)+","+c.la+","+c.lo+")")+');out center tags 600;'}
-function areaQuery(uf,city){return'[out:json][timeout:60];area["ISO3166-2"="BR-'+uf+'"]->.s;rel(area.s)["boundary"="administrative"]["admin_level"="8"]["name"="'+String(city).replace(/["\\]/g,"")+'"];map_to_area->.a;('+ovpSel("(area.a)")+');out center tags 3000;'}
-function bboxQuery(b){return'[out:json][timeout:60];('+ovpSel("("+b[0]+","+b[2]+","+b[1]+","+b[3]+")")+');out center tags 3000;'}
+function cityQuery(c){var lv=S.uf==="DF"?"^(4|8)$":"^8$";return'[out:json][timeout:25];is_in('+c.la+','+c.lo+')->.x;area.x["boundary"="administrative"]["admin_level"~"'+lv+'"]->.a;('+ovpSel("(area.a)")+');out center tags 3000;'}
+function bboxQuery(b){return'[out:json][timeout:25];('+ovpSel("("+b[0]+","+b[2]+","+b[1]+","+b[3]+")")+');out center tags 3000;'}
 function toPlaces(el){var seen={},l=[];el.forEach(function(e){var p=osmPlace(e);if(p&&!seen[p.id]){seen[p.id]=1;l.push(p)}});return l}
 function loadCity(c,cb){
-  ovpFetch(areaQuery(S.uf,S.city),0,function(el){
+  ovpFetch(cityQuery(c),function(el){
     if(!el){cb(null);return}
     if(el.length){cb(toPlaces(el),el.length>=3000?"Cidade muito grande: mostrando parte dos locais. Use a busca por nome para achar um restaurante específico.":"");return}
-    if(!c.bb){cb([],"");return}
-    ovpFetch(bboxQuery(c.bb),0,function(e2){if(!e2){cb(null);return}cb(toPlaces(e2),"Não encontrei o limite exato da cidade; mostrando a região ao redor dela.")})})}
-
-function ovpFetch(q,i,cb){i=i||0;if(i>=OVP.length){cb(null);return}
-  var ctl=typeof AbortController==="function"?new AbortController():null,t=setTimeout(function(){if(ctl)ctl.abort()},30000);
-  fetch(OVP[i]+"?data="+encodeURIComponent(q),ctl?{signal:ctl.signal}:{}).then(function(r){clearTimeout(t);if(!r.ok)throw 0;return r.json()}).then(function(j){cb(j.elements||[])}).catch(function(){clearTimeout(t);ovpFetch(q,i+1,cb)})}
-function osmCacheGet(k){try{var o=JSON.parse(localStorage.getItem(k)||"null");if(o&&Date.now()-o.t<864e5)return o.l}catch(e){}return null}
+    if(c.bb){ovpFetch(bboxQuery(c.bb),function(e2){if(!e2){cb(null);return}cb(toPlaces(e2),"Não encontrei o limite exato da cidade; mostrando a região ao redor dela.")});return}
+    ovpFetch(ovpQuery(c,15),function(e3){if(!e3){cb(null);return}cb(toPlaces(e3),"Não encontrei o limite exato da cidade; mostrando os locais num raio de 15 km do centro.")})})}
+function ovpFetch(q,a,b){
+  var cb=typeof a==="function"?a:b,done=false,fails=0,launched=0,timers=[],ctls=[],det=S.ldiag=S.ldiag||[];
+  function finish(v){if(done)return;done=true;timers.forEach(clearTimeout);ctls.forEach(function(c){try{c.abort()}catch(e){}});cb(v)}
+  function next(){if(done||launched>=OVP.length)return;var i=launched++,host=OVP[i].split("/")[2],ctl=typeof AbortController==="function"?new AbortController():null;if(ctl)ctls.push(ctl);
+    timers.push(setTimeout(function(){if(ctl)ctl.abort()},22000));
+    fetch(OVP[i]+"?data="+encodeURIComponent(q),ctl?{signal:ctl.signal}:{}).then(function(r){if(!r.ok){det.push(host+": HTTP "+r.status);throw 0}return r.json()}).then(function(j){var el=(j&&j.elements)||[];if(j&&j.remark&&!el.length){det.push(host+": "+String(j.remark).slice(0,60));throw 0}finish(el)}).catch(function(e){if(done)return;if(e!==0)det.push(host+": "+(e&&e.name==="AbortError"?"demorou demais":e&&e.name==="SyntaxError"?"resposta inválida":"sem conexão"));fails++;if(fails>=OVP.length)finish(null);else next()})}
+  next();timers.push(setTimeout(next,5000));timers.push(setTimeout(next,10000))}
+function osmCacheGet(k,stale){try{var o=JSON.parse(localStorage.getItem(k)||"null");if(o){var fr=Date.now()-o.t<864e5;if(fr||stale)return{l:o.l,fresh:fr}}}catch(e){}return null}
 function osmCacheSet(k,l){try{localStorage.setItem(k,JSON.stringify({t:Date.now(),l:l}));var ix=JSON.parse(localStorage.getItem("comanda-osm-idx")||"[]").filter(function(x){return x!==k});ix.push(k);while(ix.length>3)localStorage.removeItem(ix.shift());localStorage.setItem("comanda-osm-idx",JSON.stringify(ix))}catch(e){}}
-function loadRadius(c,r,cb){var k="comanda-osm-"+c.la.toFixed(3)+","+c.lo.toFixed(3)+"-"+r,hit=osmCacheGet(k);if(hit){cb(hit);return}
+function loadRadius(c,r,cb){var k="comanda-osm-"+c.la.toFixed(3)+","+c.lo.toFixed(3)+"-"+r,hit=osmCacheGet(k);if(hit){cb(hit.l);return}
   ovpFetch(ovpQuery(c,r),0,function(el){if(!el){cb(null);return}var l=toPlaces(el);osmCacheSet(k,l);cb(l)})}
 function centerKey(){return"c"+S.uf+"|"+S.city}
+var CAP={AC:[-9.9747,-67.81],AL:[-9.6658,-35.7353],AP:[0.0349,-51.0694],AM:[-3.119,-60.0217],BA:[-12.9714,-38.5014],CE:[-3.7319,-38.5267],DF:[-15.7939,-47.8828],ES:[-20.3155,-40.3128],GO:[-16.6869,-49.2648],MA:[-2.5307,-44.3068],MT:[-15.6014,-56.0979],MS:[-20.4697,-54.6201],MG:[-19.9167,-43.9345],PA:[-1.4558,-48.4902],PB:[-7.1195,-34.845],PR:[-25.4284,-49.2733],PE:[-8.0476,-34.877],PI:[-5.0892,-42.8019],RJ:[-22.9068,-43.1729],RN:[-5.7945,-35.211],RS:[-30.0346,-51.2177],RO:[-8.7612,-63.9039],RR:[2.8235,-60.6758],SC:[-27.5954,-48.548],SP:[-23.5505,-46.6333],SE:[-10.9472,-37.0731],TO:[-10.1689,-48.3317]};
+function jget(url,ms){return new Promise(function(res,rej){var ctl=typeof AbortController==="function"?new AbortController():null,t=setTimeout(function(){if(ctl)ctl.abort();rej(new Error("tempo esgotado"))},ms);fetch(url,ctl?{signal:ctl.signal}:{}).then(function(r){clearTimeout(t);if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(res).catch(function(e){clearTimeout(t);rej(e)})})}
 function getCenter(cb){
-  var k="comanda-geo-"+S.uf+"-"+S.city,c=null;try{c=JSON.parse(localStorage.getItem(k)||"null")}catch(e){}
-  if(c&&c.bb){cb(c);return}
-  var st=(STATES.filter(function(x){return x[0]===S.uf})[0]||[])[1]||"";
-  fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&q="+encodeURIComponent(S.city+", "+st+", Brasil")).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(a){if(!a.length){cb(c);return}var b=a[0].boundingbox,c2={la:+a[0].lat,lo:+a[0].lon,bb:b&&b.length===4?b.map(Number):null};try{localStorage.setItem(k,JSON.stringify(c2))}catch(e){}cb(c2)}).catch(function(){cb(c)})}
+  var k="comanda-geo-"+S.uf+"-"+S.city,c=null;
+  var cap=CAP[S.uf];if(cap&&S.city===defCity(S.uf)){cb({la:cap[0],lo:cap[1],bb:null});return}
+  try{c=JSON.parse(localStorage.getItem(k)||"null")}catch(e){}
+  if(c){cb(c);return}
+  var st=(STATES.filter(function(x){return x[0]===S.uf})[0]||[])[1]||"",q=S.city+", "+st+", Brasil",det=S.ldiag=S.ldiag||[];
+  function save(c2){try{localStorage.setItem(k,JSON.stringify(c2))}catch(e){}cb(c2)}
+  jget("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&q="+encodeURIComponent(q),8000).then(function(a){if(!a.length)throw new Error("não achou");var b=a[0].boundingbox;save({la:+a[0].lat,lo:+a[0].lon,bb:b&&b.length===4?b.map(Number):null})}).catch(function(e){
+    det.push("Nominatim: "+(e&&e.message||"falhou"));
+    jget("https://photon.komoot.io/api/?limit=1&q="+encodeURIComponent(q),8000).then(function(j){var f=(j.features||[])[0];if(!f)throw new Error("não achou");var co=f.geometry.coordinates,x=f.properties&&f.properties.extent;save({la:co[1],lo:co[0],bb:x?[x[3],x[1],x[0],x[2]]:null})}).catch(function(e2){det.push("Photon: "+(e2&&e2.message||"falhou"));cb(null)})})}
 function paint(){var l=document.getElementById("list");if(l&&S.tab==="rank"&&!S.pview)l.innerHTML=listHtml()}
+var SLOW=null;
 function ensureLive(force){
   if(S.tab!=="rank"||S.pview)return;
   var key=centerKey();
   if(key!==S.lkey){S.lstat="idle";S.live=[];S.lkey=key;S.center=null;S.shown=60;S.lmsg=""}
   if(S.lbusy&&S.lbusyKey===key)return;
   if(!force&&(S.lstat==="error"||S.lstat==="ok"))return;
-  var tok=++S.lreq,ck="comanda-osm-city-"+S.uf+"-"+S.city;S.lbusy=true;S.lbusyKey=key;S.lstat="loading";S.lmsg="";paint();
-  function done(l,msg){if(tok!==S.lreq)return;S.live=l;S.lbusy=false;S.lstat="ok";S.lmsg=msg||"";paint()}
-  function fail(msg){if(tok!==S.lreq)return;S.lbusy=false;S.lstat=S.live.length?"ok":"error";S.lmsg=msg;paint()}
+  var tok=++S.lreq,ck="comanda-osm-city-"+S.uf+"-"+S.city,old=force?null:osmCacheGet(ck,true);
+  S.lbusy=true;S.lbusyKey=key;S.lstat="loading";S.lmsg="";S.ldiag=[];S.lslow=false;S.lcache=!!old;clearTimeout(SLOW);
+  SLOW=setTimeout(function(){if(S.lbusy&&tok===S.lreq){S.lslow=true;paint()}},8000);
+  if(old)S.live=old.l;
+  function done(l,msg){if(tok!==S.lreq)return;clearTimeout(SLOW);S.live=l;S.lbusy=false;S.lstat="ok";S.lmsg=msg||"";paint()}
+  function fail(msg){if(tok!==S.lreq)return;clearTimeout(SLOW);S.lbusy=false;S.lstat=S.live.length?"ok":"error";S.lmsg=msg;paint()}
+  paint();
   getCenter(function(c){
     if(tok!==S.lreq)return;
-    if(!c){fail("Não consegui localizar essa cidade. Verifique a internet ou escolha outro local.");return}
+    if(!c){fail(old?"Mostrando dados salvos; não consegui atualizar agora.":"Não consegui localizar essa cidade. Verifique a internet ou escolha outro local.");return}
     S.center=c;
-    var hit=force?null:osmCacheGet(ck);
-    if(hit){done(hit);return}
-    loadRadius(c,5,function(l1){
-      if(tok!==S.lreq)return;
-      if(l1&&l1.length){S.live=l1;paint()}
-      loadCity(c,function(l2,msg){
-        if(tok!==S.lreq)return;
-        if(l2===null){if(S.live.length)done(S.live,"Mostrando só os locais perto do centro; não consegui carregar a cidade inteira.");else fail("Não consegui buscar os restaurantes agora. Tente de novo em instantes.");return}
-        osmCacheSet(ck,l2);done(l2,msg)})})})}
+    if(old&&old.fresh){done(old.l);return}
+    var qdone=!!old,b=null;
+    function settle(){
+      if(tok!==S.lreq||!b)return;
+      if(b.l){osmCacheSet(ck,b.l);done(b.l,b.m);return}
+      if(!qdone)return;
+      if(S.live.length)done(S.live,old?"Mostrando dados salvos; não consegui atualizar agora.":"Mostrando só os locais perto do centro; não consegui carregar a cidade inteira.");
+      else fail("Não consegui buscar os restaurantes agora. Tente de novo em instantes.")}
+    if(!old)loadRadius(c,2.5,function(l1){if(tok!==S.lreq)return;qdone=true;if(!b&&l1&&l1.length){S.live=l1;paint()}settle()});
+    loadCity(c,function(l2,m){if(tok!==S.lreq)return;b={l:l2,m:m};settle()})})}
 function keep(id){var r=S.live.filter(function(x){return x.id===id})[0];if(r&&!S.extra.some(function(e){return e.id===id})){S.extra.push(JSON.parse(JSON.stringify(r)));save()}}
 function formRests(sel){var l=S.extra.slice();S.live.forEach(function(r){if(!l.some(function(e){return e.id===r.id}))l.push(r)});SEED.forEach(function(r){if(r.id===sel||S.mine.some(function(v){return v.rid===r.id}))l.push(r)});if(sel&&!l.some(function(e){return e.id===sel})){var o=byId(sel);if(o)l.push(o)}return l.sort(byName)}
 function ptHours(s){return String(s).split(";").map(function(p){return esc(p.trim().replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su|PH)\b/g,function(m){return OD[m]}).replace(/\boff\b/g,"fechado"))}).join("<br>")}
@@ -353,9 +369,10 @@ function osmInfo(r){
   var h=r.hours?'<div class="hrs"><b>Horário</b> <span class="meta">(OpenStreetMap)</span><br>'+ptHours(r.hours)+'</div>':'<p class="meta" style="margin:0">Horário de funcionamento não informado.</p>',c=[];
   if(r.addr)c.push(esc(r.addr));if(r.phone)c.push('<a href="tel:'+esc(String(r.phone).replace(/[^\d+]/g,""))+'">'+esc(r.phone)+'</a>');if(r.site&&/^https?:\/\//i.test(r.site))c.push('<a href="'+esc(r.site)+'" target="_blank" rel="noopener">site</a>');
   return'<div class="info">'+h+(c.length?'<p class="meta" style="margin:0">'+c.join(" · ")+'</p>':"")+'<button class="mapbtn" data-a="map" data-v="'+r.id+'" aria-label="Abrir a localização de '+esc(r.name)+' no GPS">'+MAPSVG+'<span class="mapcap"><span>'+esc(r.area)+' · '+esc(r.city)+'</span><span>Abrir no GPS ›</span></span></button></div>'}
+function diag(){var d=(S.ldiag||[]).filter(function(x,i,a){return a.indexOf(x)===i}).slice(0,5);return d.length?'<p class="meta" style="font-size:.78rem;word-break:break-word">Detalhes: '+esc(d.join(" · "))+'</p>':""}
 function statusHtml(){
-  if(S.lstat==="loading")return S.live.length?'<p class="note">Carregando o restante da cidade…</p>':'<div class="empty"><p class="meta" style="margin:0">Buscando restaurantes de '+esc(S.city)+'…</p></div>';
-  if(S.lstat==="error")return'<div class="empty"><h2>Sem resultados agora</h2><p class="meta">'+esc(S.lmsg)+'</p><button class="btn sm" data-a="liveretry">Tentar de novo</button></div>';
+  if(S.lstat==="loading"){var slow=S.lslow?" Está demorando: os servidores gratuitos às vezes ficam lentos.":"";return S.live.length?'<p class="note">'+(S.lcache?"Atualizando…":"Carregando o restante da cidade…")+slow+'</p>':'<div class="empty"><p class="meta" style="margin:0">Buscando restaurantes de '+esc(S.city)+'…'+slow+'</p></div>'}
+  if(S.lstat==="error")return'<div class="empty"><h2>Sem resultados agora</h2><p class="meta">'+esc(S.lmsg)+'</p>'+diag()+'<button class="btn sm" data-a="liveretry">Tentar de novo</button></div>';
   return S.lmsg?'<p class="note">'+esc(S.lmsg)+' <button class="btn sm ghost" data-a="liveretry">Tentar de novo</button></p>':""}
 function listHtml(){
   var C=globalAvg(),q=norm(S.q.trim()),sg=S.rdir==="asc"?1:-1,k=S.rsort,pool=S.live.slice();
