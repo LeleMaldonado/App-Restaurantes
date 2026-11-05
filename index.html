@@ -359,7 +359,6 @@ function statusHtml(){
   return S.lmsg?'<p class="note">'+esc(S.lmsg)+' <button class="btn sm ghost" data-a="liveretry">Tentar de novo</button></p>':""}
 function listHtml(){
   var C=globalAvg(),q=norm(S.q.trim()),sg=S.rdir==="asc"?1:-1,k=S.rsort,pool=S.live.slice();
-  S.extra.forEach(function(r){if(!pool.some(function(p){return p.id===r.id})&&(q||(!r.osm&&r.uf===S.uf&&r.city===S.city)))pool.push(r)});
   var list=pool.filter(function(r){return(S.cuisine==="Todas"||r.cuisine===S.cuisine)&&(!q||norm(r.name+" "+r.cuisine+" "+r.area+" "+r.city).indexOf(q)>=0)}).map(function(r){var s=stat(r);return{r:r,n:s.n,avg:s.avg,d:Math.min(dist(r),1e9),sc:(s.n/(s.n+M))*s.avg+(M/(s.n+M))*C}});
   list.sort(function(a,b){var v=(k==="dist"?a.d-b.d:k==="aval"?a.n-b.n:k==="nome"?a.r.name.localeCompare(b.r.name,"pt"):a.sc-b.sc)*sg;return v||a.d-b.d||a.r.name.localeCompare(b.r.name,"pt")});
   var tot=list.length;list=list.slice(0,S.shown);
@@ -374,7 +373,7 @@ function rank(){
   +'<input class="sbox" id="q" type="search" placeholder="Buscar restaurante pelo nome" value="'+esc(S.q)+'" aria-label="Buscar restaurante">'
   +'<div class="chips" role="group" aria-label="Filtrar por cozinha">'+chips(["Todas"].concat(CUIS),S.cuisine,"cuisine")+'</div>'
   +sortBar("rsort",[["dist","Distância do centro"],["aval","Mais avaliados"],["nome","Nome (A–Z)"],["nota","Nota"]],S.rsort,"rdir",S.rdir)
-  +'<p class="note">'+(S.prof.vis==="public"?"Seu perfil é público: suas avaliações entram na nota dos restaurantes.":"Seu perfil é privado: suas avaliações não entram na nota. Mude isso em Perfil.")+' A lista traz os restaurantes cadastrados no OpenStreetMap para a cidade escolhida, e a busca por nome procura entre todos eles.</p><div id="list">'+listHtml()+'</div><p class="note" style="margin-top:14px">Restaurantes: dados do OpenStreetMap, © colaboradores (<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">licença ODbL</a>). Notas: só das avaliações feitas no Comanda.</p>'}
+  +'<div id="list">'+listHtml()+'</div><p class="note" style="margin-top:14px">Restaurantes: dados do OpenStreetMap, © colaboradores (<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">licença ODbL</a>). Notas: só das avaliações feitas no Comanda.</p>'}
 
 function pick(c,val){
   var h='<span class="stp">';
