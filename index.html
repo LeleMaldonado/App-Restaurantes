@@ -227,7 +227,7 @@ var CATS=[["food","Comida"],["service","Atendimento"],["ambience","Ambiente"],["
 var KEY="comanda-proto-v2",M=20,MAXP=3,today=new Date().toISOString().slice(0,10),NEAR="Perto de você";
 function newF(){return{rid:"",name:"",cuisine:"Outros",uf:(S&&S.uf)||"SP",city:(S&&S.city)||"São Paulo",r:{food:0,service:0,ambience:0,price:0},text:"",date:today,photos:[]}}
 var S={mine:[],extra:[],wish:[],favr:[],prof:{name:"Visitante",user:"visitante",bio:"",uf:"SP",city:"São Paulo",vis:"private",photo:"",favs:[],prices:[],theme:"auto",badge:""},
-tab:"rank",compose:false,pview:"",wopen:null,navr:null,editId:null,bcat:"Todas",badge:null,avmenu:false,wnew:null,live:[],center:null,lstat:"idle",lmsg:"",lkey:"",lr:0,lbusy:false,lbusyKey:"",lreq:0,shown:60,lb:null,pedit:false,pbak:null,mode:"city",uf:"SP",city:"São Paulo",pos:null,km:15,cuisine:"Todas",q:"",mq:"",rsort:"nota",rdir:"desc",msort:"data",mdir:"desc",wcuisine:"Todas",open:null,confirm:null,share:null,f:newF()};
+tab:"rank",compose:false,pview:"",wopen:null,navr:null,editId:null,bcat:"Todas",badge:null,avmenu:false,wnew:null,live:[],center:null,lstat:"idle",lmsg:"",lkey:"",lr:0,lbusy:false,lbusyKey:"",lreq:0,shown:30,lb:null,pedit:false,pbak:null,mode:"city",uf:"SP",city:"São Paulo",pos:null,km:15,cuisine:"Todas",q:"",mq:"",rsort:"nota",rdir:"desc",msort:"data",mdir:"desc",wcuisine:"Todas",open:null,confirm:null,share:null,f:newF()};
 var loaded=false;
 try{var d=JSON.parse(localStorage.getItem(KEY)||"null");if(d){S.mine=d.mine||[];S.extra=d.extra||[];S.wish=d.wish||[];S.favr=d.favr||[];Object.assign(S.prof,d.prof||{});loaded=true}}catch(e){}
 if(!loaded){S.mine=[];S.wish=[];S.favr=[]}
@@ -298,28 +298,17 @@ function osmCuisine(t){var c=((t.cuisine||"")+" "+(t.amenity||"")+" "+(t.shop||"
 function osmPlace(e){var t=e.tags||{};if(!t.name)return null;var la=e.lat!=null?e.lat:(e.center&&e.center.lat),lo=e.lon!=null?e.lon:(e.center&&e.center.lon);if(la==null||lo==null)return null;
   var street=[t["addr:street"],t["addr:housenumber"]].filter(Boolean).join(", "),sub=t["addr:suburb"]||t["addr:neighbourhood"]||t["addr:district"]||"",city=t["addr:city"]||(S.mode==="city"?S.city:NEAR);
   return{id:"osm-"+e.type.charAt(0)+e.id,osm:1,name:t.name,cuisine:osmCuisine(t),price:"",uf:S.mode==="city"?S.uf:"",city:city,area:sub||street||city,addr:street,km:0,la:la,lo:lo,n:0,avg:0,hours:t.opening_hours||"",phone:t.phone||t["contact:phone"]||"",site:t.website||t["contact:website"]||""}}
-function ovpSel(f){return'nwr["amenity"~"^(restaurant|fast_food|cafe|bar|pub|ice_cream|food_court)$"]["name"]'+f+';nwr["shop"~"^(bakery|confectionery|pastry|chocolate)$"]["name"]'+f+';'}
-function ovpQuery(c,r){return'[out:json][timeout:25];('+ovpSel("(around:"+Math.round(r*1000)+","+c.la+","+c.lo+")")+');out center tags 600;'}
-function cityQuery(c){var lv=S.uf==="DF"?"^(4|8)$":"^8$";return'[out:json][timeout:25];is_in('+c.la+','+c.lo+')->.x;area.x["boundary"="administrative"]["admin_level"~"'+lv+'"]->.a;('+ovpSel("(area.a)")+');out center tags 3000;'}
-function bboxQuery(b){return'[out:json][timeout:25];('+ovpSel("("+b[0]+","+b[2]+","+b[1]+","+b[3]+")")+');out center tags 3000;'}
+function ovpQuery(c,r){var a="(around:"+Math.round(r*1000)+","+c.la+","+c.lo+")",t=["restaurant","fast_food","cafe","bar","pub","ice_cream"],h=t.map(function(k){return'nw["amenity"="'+k+'"]["name"]'+a+';'}).join("")+'nw["shop"="confectionery"]["name"]'+a+';nw["shop"="pastry"]["name"]'+a+';';return'[out:json][timeout:10];('+h+');out center tags 400;'}
 function toPlaces(el){var seen={},l=[];el.forEach(function(e){var p=osmPlace(e);if(p&&!seen[p.id]){seen[p.id]=1;l.push(p)}});return l}
-function loadCity(c,cb){
-  ovpFetch(cityQuery(c),function(el){
-    if(!el){cb(null);return}
-    if(el.length){cb(toPlaces(el),el.length>=3000?"Cidade muito grande: mostrando parte dos locais. Use a busca por nome para achar um restaurante específico.":"");return}
-    if(c.bb){ovpFetch(bboxQuery(c.bb),function(e2){if(!e2){cb(null);return}cb(toPlaces(e2),"Não encontrei o limite exato da cidade; mostrando a região ao redor dela.")});return}
-    ovpFetch(ovpQuery(c,15),function(e3){if(!e3){cb(null);return}cb(toPlaces(e3),"Não encontrei o limite exato da cidade; mostrando os locais num raio de 15 km do centro.")})})}
 function ovpFetch(q,a,b){
   var cb=typeof a==="function"?a:b,done=false,fails=0,launched=0,timers=[],ctls=[],det=S.ldiag=S.ldiag||[];
   function finish(v){if(done)return;done=true;timers.forEach(clearTimeout);ctls.forEach(function(c){try{c.abort()}catch(e){}});cb(v)}
   function next(){if(done||launched>=OVP.length)return;var i=launched++,host=OVP[i].split("/")[2],ctl=typeof AbortController==="function"?new AbortController():null;if(ctl)ctls.push(ctl);
-    timers.push(setTimeout(function(){if(ctl)ctl.abort()},22000));
+    timers.push(setTimeout(function(){if(ctl)ctl.abort()},15000));
     fetch(OVP[i]+"?data="+encodeURIComponent(q),ctl?{signal:ctl.signal}:{}).then(function(r){if(!r.ok){det.push(host+": HTTP "+r.status);throw 0}return r.json()}).then(function(j){var el=(j&&j.elements)||[];if(j&&j.remark&&!el.length){det.push(host+": "+String(j.remark).slice(0,60));throw 0}finish(el)}).catch(function(e){if(done)return;if(e!==0)det.push(host+": "+(e&&e.name==="AbortError"?"demorou demais":e&&e.name==="SyntaxError"?"resposta inválida":"sem conexão"));fails++;if(fails>=OVP.length)finish(null);else next()})}
-  next();timers.push(setTimeout(next,5000));timers.push(setTimeout(next,10000))}
+  next();timers.push(setTimeout(next,3000));timers.push(setTimeout(next,6000))}
 function osmCacheGet(k,stale){try{var o=JSON.parse(localStorage.getItem(k)||"null");if(o){var fr=Date.now()-o.t<864e5;if(fr||stale)return{l:o.l,fresh:fr}}}catch(e){}return null}
-function osmCacheSet(k,l){try{localStorage.setItem(k,JSON.stringify({t:Date.now(),l:l}));var ix=JSON.parse(localStorage.getItem("comanda-osm-idx")||"[]").filter(function(x){return x!==k});ix.push(k);while(ix.length>3)localStorage.removeItem(ix.shift());localStorage.setItem("comanda-osm-idx",JSON.stringify(ix))}catch(e){}}
-function loadRadius(c,r,cb){var k="comanda-osm-"+c.la.toFixed(3)+","+c.lo.toFixed(3)+"-"+r,hit=osmCacheGet(k);if(hit){cb(hit.l);return}
-  ovpFetch(ovpQuery(c,r),0,function(el){if(!el){cb(null);return}var l=toPlaces(el);osmCacheSet(k,l);cb(l)})}
+function osmCacheSet(k,l){try{localStorage.setItem(k,JSON.stringify({t:Date.now(),l:l}));var ix=JSON.parse(localStorage.getItem("comanda-osm2-idx")||"[]").filter(function(x){return x!==k});ix.push(k);while(ix.length>3)localStorage.removeItem(ix.shift());localStorage.setItem("comanda-osm2-idx",JSON.stringify(ix))}catch(e){}}
 function centerKey(){return"c"+S.uf+"|"+S.city}
 var CAP={AC:[-9.9747,-67.81],AL:[-9.6658,-35.7353],AP:[0.0349,-51.0694],AM:[-3.119,-60.0217],BA:[-12.9714,-38.5014],CE:[-3.7319,-38.5267],DF:[-15.7939,-47.8828],ES:[-20.3155,-40.3128],GO:[-16.6869,-49.2648],MA:[-2.5307,-44.3068],MT:[-15.6014,-56.0979],MS:[-20.4697,-54.6201],MG:[-19.9167,-43.9345],PA:[-1.4558,-48.4902],PB:[-7.1195,-34.845],PR:[-25.4284,-49.2733],PE:[-8.0476,-34.877],PI:[-5.0892,-42.8019],RJ:[-22.9068,-43.1729],RN:[-5.7945,-35.211],RS:[-30.0346,-51.2177],RO:[-8.7612,-63.9039],RR:[2.8235,-60.6758],SC:[-27.5954,-48.548],SP:[-23.5505,-46.6333],SE:[-10.9472,-37.0731],TO:[-10.1689,-48.3317]};
 function jget(url,ms){return new Promise(function(res,rej){var ctl=typeof AbortController==="function"?new AbortController():null,t=setTimeout(function(){if(ctl)ctl.abort();rej(new Error("tempo esgotado"))},ms);fetch(url,ctl?{signal:ctl.signal}:{}).then(function(r){clearTimeout(t);if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}).then(res).catch(function(e){clearTimeout(t);rej(e)})})}
@@ -334,14 +323,31 @@ function getCenter(cb){
     det.push("Nominatim: "+(e&&e.message||"falhou"));
     jget("https://photon.komoot.io/api/?limit=1&q="+encodeURIComponent(q),8000).then(function(j){var f=(j.features||[])[0];if(!f)throw new Error("não achou");var co=f.geometry.coordinates,x=f.properties&&f.properties.extent;save({la:co[1],lo:co[0],bb:x?[x[3],x[1],x[0],x[2]]:null})}).catch(function(e2){det.push("Photon: "+(e2&&e2.message||"falhou"));cb(null)})})}
 function paint(){var l=document.getElementById("list");if(l&&S.tab==="rank"&&!S.pview)l.innerHTML=listHtml()}
+try{for(var ki=localStorage.length-1;ki>=0;ki--){var kn=localStorage.key(ki);if(kn&&kn.indexOf("comanda-osm-")===0)localStorage.removeItem(kn)}}catch(e){}
+function best(acc,c){return Object.keys(acc).map(function(k){var p=acc[k];p._d=hav(c.la,c.lo,p.la,p.lo);return p}).sort(function(a,b){return a._d-b._d}).slice(0,60).map(function(p){delete p._d;return p})}
+function nominatimNear(c,cb){
+  var d=0.05,det=S.ldiag=S.ldiag||[];
+  jget("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=40&bounded=1&addressdetails=1&extratags=1&accept-language=pt-BR&countrycodes=br&viewbox="+[c.lo-d,c.la+d,c.lo+d,c.la-d].join(",")+"&q=restaurant",9000).then(function(a){
+    var acc={};a.forEach(function(x){var ad=x.address||{},t=Object.assign({},x.extratags||{});t.name=x.name||"";t.amenity=x.type||"restaurant";if(ad.road)t["addr:street"]=ad.road;if(ad.house_number)t["addr:housenumber"]=ad.house_number;if(ad.suburb||ad.neighbourhood)t["addr:suburb"]=ad.suburb||ad.neighbourhood;
+      var p=osmPlace({type:x.osm_type||"node",id:x.osm_id,lat:+x.lat,lon:+x.lon,tags:t});if(p)acc[p.id]=p});cb(best(acc,c))}).catch(function(e){det.push("Nominatim: "+(e&&e.message||"falhou"));cb(null)})}
+function fetchNear(c,tok,cb){
+  var R=[2,6,15],i=0,acc={};
+  (function step(){ovpFetch(ovpQuery(c,R[i]),function(el){
+    if(tok!==S.lreq)return;
+    if(el===null){if(Object.keys(acc).length){cb(best(acc,c));return}nominatimNear(c,function(l){cb(l,l&&l.length?"Servidor principal indisponível; mostrando uma lista reduzida.":"")});return}
+    toPlaces(el).forEach(function(p){acc[p.id]=p});
+    var l=best(acc,c);
+    if(l.length>=15||i>=R.length-1){cb(l);return}
+    if(l.length){S.live=l;paint()}
+    i++;step()})})()}
 var SLOW=null;
 function ensureLive(force){
   if(S.tab!=="rank"||S.pview)return;
   var key=centerKey();
-  if(key!==S.lkey){S.lstat="idle";S.live=[];S.lkey=key;S.center=null;S.shown=60;S.lmsg=""}
+  if(key!==S.lkey){S.lstat="idle";S.live=[];S.lkey=key;S.center=null;S.shown=30;S.lmsg=""}
   if(S.lbusy&&S.lbusyKey===key)return;
   if(!force&&(S.lstat==="error"||S.lstat==="ok"))return;
-  var tok=++S.lreq,ck="comanda-osm-city-"+S.uf+"-"+S.city,old=force?null:osmCacheGet(ck,true);
+  var tok=++S.lreq,ck="comanda-osm2-"+S.uf+"-"+S.city,old=force?null:osmCacheGet(ck,true);
   S.lbusy=true;S.lbusyKey=key;S.lstat="loading";S.lmsg="";S.ldiag=[];S.lslow=false;S.lcache=!!old;clearTimeout(SLOW);
   SLOW=setTimeout(function(){if(S.lbusy&&tok===S.lreq){S.lslow=true;paint()}},8000);
   if(old)S.live=old.l;
@@ -353,15 +359,12 @@ function ensureLive(force){
     if(!c){fail(old?"Mostrando dados salvos; não consegui atualizar agora.":"Não consegui localizar essa cidade. Verifique a internet ou escolha outro local.");return}
     S.center=c;
     if(old&&old.fresh){done(old.l);return}
-    var qdone=!!old,b=null;
-    function settle(){
-      if(tok!==S.lreq||!b)return;
-      if(b.l){osmCacheSet(ck,b.l);done(b.l,b.m);return}
-      if(!qdone)return;
-      if(S.live.length)done(S.live,old?"Mostrando dados salvos; não consegui atualizar agora.":"Mostrando só os locais perto do centro; não consegui carregar a cidade inteira.");
-      else fail("Não consegui buscar os restaurantes agora. Tente de novo em instantes.")}
-    if(!old)loadRadius(c,2.5,function(l1){if(tok!==S.lreq)return;qdone=true;if(!b&&l1&&l1.length){S.live=l1;paint()}settle()});
-    loadCity(c,function(l2,m){if(tok!==S.lreq)return;b={l:l2,m:m};settle()})})}
+    fetchNear(c,tok,function(l,msg){
+      if(tok!==S.lreq)return;
+      if(l&&l.length){osmCacheSet(ck,l);done(l,msg);return}
+      if(l){done([],"");return}
+      if(S.live.length)done(S.live,old?"Mostrando dados salvos; não consegui atualizar agora.":"Mostrando uma lista parcial; não consegui completar a busca.");
+      else fail("Não consegui buscar os restaurantes agora. Tente de novo em instantes.")})})}
 function keep(id){var r=S.live.filter(function(x){return x.id===id})[0];if(r&&!S.extra.some(function(e){return e.id===id})){S.extra.push(JSON.parse(JSON.stringify(r)));save()}}
 function formRests(sel){var l=S.extra.slice();S.live.forEach(function(r){if(!l.some(function(e){return e.id===r.id}))l.push(r)});SEED.forEach(function(r){if(r.id===sel||S.mine.some(function(v){return v.rid===r.id}))l.push(r)});if(sel&&!l.some(function(e){return e.id===sel})){var o=byId(sel);if(o)l.push(o)}return l.sort(byName)}
 function ptHours(s){return String(s).split(";").map(function(p){return esc(p.trim().replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su|PH)\b/g,function(m){return OD[m]}).replace(/\boff\b/g,"fechado"))}).join("<br>")}
@@ -371,7 +374,7 @@ function osmInfo(r){
   return'<div class="info">'+h+(c.length?'<p class="meta" style="margin:0">'+c.join(" · ")+'</p>':"")+'<button class="mapbtn" data-a="map" data-v="'+r.id+'" aria-label="Abrir a localização de '+esc(r.name)+' no GPS">'+MAPSVG+'<span class="mapcap"><span>'+esc(r.area)+' · '+esc(r.city)+'</span><span>Abrir no GPS ›</span></span></button></div>'}
 function diag(){var d=(S.ldiag||[]).filter(function(x,i,a){return a.indexOf(x)===i}).slice(0,5);return d.length?'<p class="meta" style="font-size:.78rem;word-break:break-word">Detalhes: '+esc(d.join(" · "))+'</p>':""}
 function statusHtml(){
-  if(S.lstat==="loading"){var slow=S.lslow?" Está demorando: os servidores gratuitos às vezes ficam lentos.":"";return S.live.length?'<p class="note">'+(S.lcache?"Atualizando…":"Carregando o restante da cidade…")+slow+'</p>':'<div class="empty"><p class="meta" style="margin:0">Buscando restaurantes de '+esc(S.city)+'…'+slow+'</p></div>'}
+  if(S.lstat==="loading"){var slow=S.lslow?" Está demorando: os servidores gratuitos às vezes ficam lentos.":"";return S.live.length?'<p class="note">'+(S.lcache?"Atualizando…":"Buscando mais restaurantes…")+slow+'</p>':'<div class="empty"><p class="meta" style="margin:0">Buscando restaurantes de '+esc(S.city)+'…'+slow+'</p></div>'}
   if(S.lstat==="error")return'<div class="empty"><h2>Sem resultados agora</h2><p class="meta">'+esc(S.lmsg)+'</p>'+diag()+'<button class="btn sm" data-a="liveretry">Tentar de novo</button></div>';
   return S.lmsg?'<p class="note">'+esc(S.lmsg)+' <button class="btn sm ghost" data-a="liveretry">Tentar de novo</button></p>':""}
 function listHtml(){
@@ -384,7 +387,7 @@ function listHtml(){
     var o=S.open===x.r.id,mine=S.mine.filter(function(v){return v.rid===x.r.id}),w=S.wish.indexOf(x.r.id)>=0;
     var h='<div class="rest'+(k==="nota"&&sg<0&&x.n>0&&i<3?" top":"")+'"><button class="row" data-a="open" data-v="'+x.r.id+'" aria-expanded="'+o+'"><span class="pos">'+(i+1)+'</span><span><b>'+esc(x.r.name)+'</b>'+(matchFav(x.r)?'<span class="badge">combina com você</span>':"")+'<br><span class="meta">'+esc(x.r.cuisine)+(x.r.price?' · '+x.r.price:"")+' · '+esc(x.r.area)+(x.d<1e9?' · a '+kmt(x.d)+' km do centro':"")+'<br>'+(x.n?x.n+' avaliações · média '+n1(x.avg):'Sem avaliações ainda')+'</span></span>'+(x.n?'<span class="stamp">'+n1(x.sc)+'<small>nota</small></span>':'<span class="stamp off">–<small>sem notas</small></span>')+'</button>';
     if(o)h+='<div class="detail">'+infoHtml(x.r)+(mine.length?mine.map(function(v){return'<p><span class="stars">'+sh(v.score)+'</span> '+n1(v.score)+' <span class="meta">'+fmt(v.date)+'</span><br>'+esc(v.text||"Sem comentário.")+'</p>'}).join(""):'<p class="meta">Você ainda não avaliou este restaurante.</p>')+'<div class="acts"><button class="btn sm" data-a="rate" data-v="'+x.r.id+'">Avaliar</button><button class="btn sm ghost" data-a="wish" data-v="'+x.r.id+'" aria-pressed="'+w+'">'+(w?"Adicionado a Quero Conhecer ✓":"Quero Conhecer")+'</button></div></div>';
-    return h+'</div>'}).join("")+(tot>S.shown?'<button class="btn ghost" style="width:100%;margin-top:6px" data-a="more">Mostrar mais ('+(tot-S.shown)+' restantes)</button>':"")}
+    return h+'</div>'}).join("")+(tot>S.shown?'<button class="btn ghost" style="width:100%;margin-top:6px" data-a="more">Mostrar mais ('+(tot-S.shown)+' restantes)</button>':(tot>=60?'<p class="note">Mostrando os 60 restaurantes mais próximos do centro da cidade.</p>':""))}
 function rank(){
   return'<div class="ctl">'+locSel("uf","city",S.uf,S.city)+'</div>'
   +'<input class="sbox" id="q" type="search" placeholder="Buscar restaurante pelo nome" value="'+esc(S.q)+'" aria-label="Buscar restaurante">'
@@ -603,9 +606,9 @@ document.addEventListener("click",function(e){
   var b=e.target.closest("[data-a]");if(!b)return;var a=b.dataset.a,v=b.dataset.v;
   if(a==="tab"){if(S.pedit){if(S.pbak)Object.assign(S.prof,S.pbak);S.pedit=false;S.pbak=null}S.tab=v;S.pview="";S.wnew=null;if(v!=="mine"){S.compose=false;S.editId=null}render();window.scrollTo(0,0)}
   else if(a==="mode"){if(v==="gps")locate();else{S.mode="city";render()}}
-  else if(a==="cuisine"){S.cuisine=v;S.open=null;S.shown=60;render()}
+  else if(a==="cuisine"){S.cuisine=v;S.open=null;S.shown=30;render()}
   else if(a==="wcuisine"){S.wcuisine=v;render()}
-  else if(a==="rdir"){S.rdir=S.rdir==="asc"?"desc":"asc";S.shown=60;render()}
+  else if(a==="rdir"){S.rdir=S.rdir==="asc"?"desc":"asc";S.shown=30;render()}
   else if(a==="mdir"){S.mdir=S.mdir==="asc"?"desc":"asc";render()}
   else if(a==="open"){S.open=S.open===v?null:v;render()}
   else if(a==="rate"){keep(v);S.editId=null;S.f=newF();S.f.rid=v;S.tab="mine";S.compose=true;render();window.scrollTo(0,0)}
@@ -645,7 +648,7 @@ document.addEventListener("click",function(e){
   else if(a==="closenav"){S.navr=null;modal()}
   else if(a==="winfo"){S.wopen=S.wopen===v?null:v;render()}
   else if(a==="wsel"){keep(v);S.wish.push(v);save();render();toast("Adicionado a Quero Conhecer")}
-  else if(a==="more"){S.shown+=60;paint()}
+  else if(a==="more"){S.shown+=30;paint()}
   else if(a==="liveretry"){S.lstat="idle";ensureLive(true)}
   else if(a==="save")doSave();
   else if(a==="share")share(+v);
@@ -665,7 +668,7 @@ document.addEventListener("input",function(e){var i=e.target.id,x=e.target.value
   if(i==="km"){S.km=+x;document.getElementById("kmv").textContent=S.km+" km";document.getElementById("list").innerHTML=listHtml();clearTimeout(KT);KT=setTimeout(ensureLive,700)}
   else if(i==="wname"){document.getElementById("wsug").innerHTML=sugHtml(x)}
   else if(i==="wnn")S.wnew.name=x;
-  else if(i==="q"){S.q=x;S.shown=60;document.getElementById("list").innerHTML=listHtml()}
+  else if(i==="q"){S.q=x;S.shown=30;document.getElementById("list").innerHTML=listHtml()}
   else if(i==="mq"){S.mq=x;document.getElementById("mlist").innerHTML=ticketsHtml()}
   else if(i==="text"||i==="name"||i==="date")S.f[i]=x;
   else if(i==="pname")S.prof.name=x;
@@ -681,7 +684,7 @@ document.addEventListener("change",function(e){var i=e.target.id,x=e.target.valu
   else if(i==="wncity")S.wnew.city=x;
   else if(i==="uf"){S.uf=x;S.city=defCity(x);S.open=null;render()}
   else if(i==="city"){S.city=x;S.open=null;render()}
-  else if(i==="rsort"){S.shown=60;S.rsort=x;S.rdir=(x==="dist"||x==="nome")?"asc":"desc";render()}
+  else if(i==="rsort"){S.shown=30;S.rsort=x;S.rdir=(x==="dist"||x==="nome")?"asc":"desc";render()}
   else if(i==="msort"){S.msort=x;S.mdir=x==="alfa"?"asc":"desc";render()}
   else if(i==="photos")addPhotos(e.target.files);
   else if(i==="avatar"&&e.target.files[0]){S.avmenu=false;addAvatar(e.target.files[0])}
